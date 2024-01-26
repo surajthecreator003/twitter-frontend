@@ -7,13 +7,22 @@ import { FaXTwitter } from "react-icons/fa6";
 import { FaMoneyBill } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
 
+import toast from "react-hot-toast";
+import { useCallback } from "react";
+
+//GoogleLogin is the google login button and will take you to the login page of google
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+
+//import { graphql } from "@/gql";
+import { graphqlClient } from "@/clients/api";
+import { verifyUserGoogleToken } from "@/graphql/query/user";
+
 
 //types for Left Side Bar Nav Buttons 
 interface TwitterSidebarButton{
   title:string;
   icon:React.ReactNode;
 }
-
 
 const sidebarMenuItems:TwitterSidebarButton[]=[
 {title:"Home",icon:<BiHome/>},
@@ -36,6 +45,37 @@ const sidebarMenuItems:TwitterSidebarButton[]=[
 
 //This will be the Home Page of the App "/"
 export default function Home() {
+
+  //after login from google Oauth you will get a credentials
+  //credentials/creds automatically gets printed in console
+
+  //useCallback to prevent re-rendering of the component and memoize the function
+ const handleLoginWithGoogle=useCallback(async(cred:CredentialResponse)=>{
+
+  const googleToken=cred.credential;
+
+  if (!googleToken){
+
+    //throw a react toastify error
+    toast.error("Google Token Not Found ");
+
+    return;
+    
+  }
+
+  //calling the graphql server to verify the google token
+  const {verifyGoogleToken}= await graphqlClient.request(verifyUserGoogleToken,{token:googleToken});
+
+  toast.success("Verifying Google Token is Succesfull");
+  console.log("verifyGoogleToken",verifyGoogleToken);
+
+  if(verifyGoogleToken){
+    localStorage.setItem("__twitter__token",verifyGoogleToken)
+  }
+
+ },[])
+
+
   return (
    <div >
     <div className="grid grid-cols-12 h-screen w-screen px-56 ">
@@ -73,7 +113,12 @@ export default function Home() {
       </div>
 
 
-      <div className="col-span-4">
+      <div className="col-span-4 p-5">
+        <div className="border p-5 bg-slate-700 rounded-lg">
+          <h1 className="my-2 text-2xl">New to Twitter ?</h1>
+        <GoogleLogin onSuccess={handleLoginWithGoogle} />
+        </div>
+           
       </div>
 
     </div>
