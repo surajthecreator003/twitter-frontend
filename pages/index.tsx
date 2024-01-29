@@ -16,6 +16,9 @@ import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 //import { graphql } from "@/gql";
 import { graphqlClient } from "@/clients/api";
 import { verifyUserGoogleToken } from "@/graphql/query/user";
+import { useCurrentUser } from "@/hooks/user";//the react query
+import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 
 
 //types for Left Side Bar Nav Buttons 
@@ -46,13 +49,20 @@ const sidebarMenuItems:TwitterSidebarButton[]=[
 //This will be the Home Page of the App "/"
 export default function Home() {
 
-  //after login from google Oauth you will get a credentials
+  //after login from google Oauth you will get a credentials object from the onSucess callback function in GoogleLogin Button
   //credentials/creds automatically gets printed in console
+
+
+  const {user}=useCurrentUser();
+  console.log("Current User feteched and stored in react-query =",user);
+
+  const queryClient=useQueryClient()
 
   //useCallback to prevent re-rendering of the component and memoize the function
  const handleLoginWithGoogle=useCallback(async(cred:CredentialResponse)=>{
 
   const googleToken=cred.credential;
+  console.log("Google Token =",googleToken);
 
   if (!googleToken){
 
@@ -62,18 +72,21 @@ export default function Home() {
     return;
     
   }
-
+  
   //calling the graphql server to verify the google token
   const {verifyGoogleToken}= await graphqlClient.request(verifyUserGoogleToken,{token:googleToken});
 
+ 
   toast.success("Verifying Google Token is Succesfull");
-  console.log("verifyGoogleToken",verifyGoogleToken);
+  console.log("Converted GoogleToken to JWT token =",verifyGoogleToken);
 
-  if(verifyGoogleToken){
-    localStorage.setItem("__twitter__token",verifyGoogleToken)
+  if(verifyGoogleToken){//after getting the converted JWT token from the graphql server  store it in the local storage 
+    window.localStorage.setItem("__twitter__token",verifyGoogleToken)
   }
 
- },[])
+  await queryClient.invalidateQueries({ queryKey: ["current-user"] }); // invalidate the user query in react-query to refetch the user data from the graphql server
+
+ },[queryClient])
 
 
   return (
@@ -81,7 +94,7 @@ export default function Home() {
     <div className="grid grid-cols-12 h-screen w-screen px-56 ">
 
 
-      <div className="col-span-3 border pt-1 px-4 ml-10">
+      <div className="col-span-3 border pt-1 px-4 ml-10 relative">
         <div className=" transition-all cursor-pointer h-fit w-fit text-2xl hover:bg-gray-600  p-5 rounded-full">
         <FaXTwitter  />
         </div> 
@@ -95,12 +108,31 @@ export default function Home() {
             </li>)}
           </ul>
 
+          
+
 
           <div className="mt-5 px-3">
-          <button className="mx-4 px-4 font-semibold  bg-[#1d9bf0] py-2 rounded-full w-full ">Tweet</button>
-          </div>
-          
-        </div>     
+          <button className="mx-4 px-3 font-semibold  bg-[#1d9bf0] py-2 rounded-full w-full ">
+            Tweet
+            </button>
+          </div>         
+        </div> 
+        
+
+        {user  && <div className="px-3 py-2 bg-slate-800 p-3 rounded-full items-center absolute bottom-5 flex gap-2 tex-xl">
+          {user && user?.profileImageURL && <Image src={user?.profileImageURL} alt="profile" 
+                                                    height={50} 
+                                                    width={50}
+                                                    className="rounded-full h-15 w-15"/>
+                                                    
+                                                    }
+            <div>
+            <h3>{user.firstName}</h3> 
+            <h3>{user.lastName}</h3> </div>                                        
+           
+
+        </div>}
+            
       </div>
 
 
@@ -114,10 +146,12 @@ export default function Home() {
 
 
       <div className="col-span-4 p-5">
-        <div className="border p-5 bg-slate-700 rounded-lg">
+
+        {!user  && <div className="border p-5 bg-slate-700 rounded-lg">
           <h1 className="my-2 text-2xl">New to Twitter ?</h1>
-        <GoogleLogin onSuccess={handleLoginWithGoogle} />
+          <GoogleLogin onSuccess={handleLoginWithGoogle} />
         </div>
+        }
            
       </div>
 

@@ -1,5 +1,19 @@
 
 
+
+WorkFlow for Login and Signup User
+
+- Set up the Google OAuth in GCP so that you can login with the help of Google Email,
+- After getting the google Oauth JWT token from the login it will then send a param(onAccess) inside the GoogleOAuth Login component
+- The whole handleGoogleLogin uses useCallback so that only ounce you store the token if the email is send
+
+
+
+
+
+
+
+
 Cons of Page router over App Router
 
  - No Server Actions in Page Router

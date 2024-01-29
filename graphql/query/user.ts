@@ -14,3 +14,21 @@ query VerifyUserGoogleToken($token: String!) {
 }
 
 `)
+
+
+
+export const getCurrentUserQuery=graphql(`#graphql
+  
+query GetCurrentUser {
+    getCurrentUser {
+        id,
+        email,
+        lastName,
+        firstName,
+        profileImageURL
+         
+    }
+}
+
+`)
+//this will also passed to react-query as a query function
