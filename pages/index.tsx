@@ -20,7 +20,7 @@ import { useCurrentUser } from "@/hooks/user";//the react query
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 
-import { BiImage } from "react-icons/bi";
+
 
 //types for Left Side Bar Nav Buttons 
 interface TwitterSidebarButton{
