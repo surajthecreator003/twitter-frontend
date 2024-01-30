@@ -1,7 +1,7 @@
 
 import FeedCard from "@/components/FeedCard";
 //import { Inter } from "next/font/google";
-import { BiHash, BiHome, BiUser } from "react-icons/bi";
+import { BiHash, BiHome, BiImageAlt, BiUser } from "react-icons/bi";
 import { BsBell, BsBookmark, BsEnvelope } from "react-icons/bs";
 import { FaXTwitter } from "react-icons/fa6";
 import { FaMoneyBill } from "react-icons/fa";
@@ -20,6 +20,7 @@ import { useCurrentUser } from "@/hooks/user";//the react query
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 
+import { BiImage } from "react-icons/bi";
 
 //types for Left Side Bar Nav Buttons 
 interface TwitterSidebarButton{
@@ -55,8 +56,18 @@ export default function Home() {
 
   const {user}=useCurrentUser();
   console.log("Current User feteched and stored in react-query =",user);
-
   const queryClient=useQueryClient()
+
+
+  //basically just create a React input element (that takes only image files) when clicked on the image button
+  const handleSelectImage=useCallback(()=>{
+       const input=document.createElement("input");
+
+       input.setAttribute("type","file");
+       input.setAttribute("accept","image/*");//accept only image files
+       input.click()
+  },[])
+
 
   //useCallback to prevent re-rendering of the component and memoize the function
  const handleLoginWithGoogle=useCallback(async(cred:CredentialResponse)=>{
@@ -84,9 +95,14 @@ export default function Home() {
     window.localStorage.setItem("__twitter__token",verifyGoogleToken)
   }
 
-  await queryClient.invalidateQueries({ queryKey: ["current-user"] }); // invalidate the user query in react-query to refetch the user data from the graphql server
+  //for diffrent account login invalidate the current user
+  await queryClient.invalidateQueries({ queryKey: ["current-user"] }); // this is good as if we try to login from diffrent account then the current user
+  // will be staled and if there is new data then it will be fetched from the graphql server
+  //the invalidateQueries function will  make the initially fetched data as stale/rancid and will refetch the data from the graphql server whenver you reload
+  //this also makes the use of useCallback here kind of useless as the component will re-render after the invalidateQueries function is called and if there is new Data
+  //fetched from the graphql server
 
- },[queryClient])
+ },[queryClient])//queryClient is a react-query
 
 
   return (
@@ -137,6 +153,34 @@ export default function Home() {
 
 
       <div className="col-span-5  h-screen overflow-scroll border-r-[1px] border-l-2-[1px] border-gray-600">
+
+        <div className="transition cursor-pointer border border-gray-600 border-r-0 border-b-0 border-l-0 p-3 hover:bg-slate-900">
+
+          <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-1">
+               {
+                user?.profileImageURL &&
+                <Image
+                className="rounded-full"
+                src={user?.profileImageURL}
+                alt="User-Image"
+                height={50}
+                width={40}
+                />
+               }    
+              </div>
+
+              <div className="col-span-11">
+                 <textarea placeholder="Whats happening" className="border-b borer-slate-700 text-xl px-3 bg-transparent  w-full" rows={3}></textarea>
+                 <div className="mt-2 flex justify-between items-center">
+                     <BiImageAlt onClick={handleSelectImage} className="text-2xl"/>
+                     <button className=" text-sm px-3 font-semibold  bg-[#1d9bf0] py-1 rounded-full ">
+                          Tweet
+                      </button>
+                 </div>
+              </div>
+          </div>
+
         <FeedCard/>
         <FeedCard/>
         <FeedCard/>
@@ -157,5 +201,6 @@ export default function Home() {
 
     </div>
    </div>
+ </div>  
   );
 }
