@@ -8,7 +8,7 @@ import { FaMoneyBill } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
 
 import toast from "react-hot-toast";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 //GoogleLogin is the google login button and will take you to the login page of google
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
@@ -19,6 +19,8 @@ import { verifyUserGoogleToken } from "@/graphql/query/user";
 import { useCurrentUser } from "@/hooks/user";//the react query
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
+import { useCreateTweet, useGetAllTweets } from "@/hooks/tweet";
+import { Tweet } from "@/gql/graphql";
 
 
 
@@ -55,8 +57,15 @@ export default function Home() {
 
 
   const {user}=useCurrentUser();
+  const {tweets=[]}=useGetAllTweets();
+  const {mutate}=useCreateTweet();
+
   console.log("Current User feteched and stored in react-query =",user);
-  const queryClient=useQueryClient()
+  console.log("All Tweets feteched and stored in react-query =",tweets);
+
+  const queryClient=useQueryClient();
+
+  const [content,setContent]=useState("");
 
 
   //basically just create a React input element (that takes only image files) when clicked on the image button
@@ -71,7 +80,6 @@ export default function Home() {
 
   //useCallback to prevent re-rendering of the component and memoize the function
  const handleLoginWithGoogle=useCallback(async(cred:CredentialResponse)=>{
-
   const googleToken=cred.credential;
   console.log("Google Token =",googleToken);
 
@@ -87,7 +95,6 @@ export default function Home() {
   //calling the graphql server to verify the google token
   const {verifyGoogleToken}= await graphqlClient.request(verifyUserGoogleToken,{token:googleToken});
 
- 
   toast.success("Verifying Google Token is Succesfull");
   console.log("Converted GoogleToken to JWT token =",verifyGoogleToken);
 
@@ -105,10 +112,17 @@ export default function Home() {
  },[queryClient])//queryClient is a react-query
 
 
+ const handleCreateTweet=useCallback(async()=>{
+    mutate({
+      content,
+    })
+  },[content,mutate])//this will result in rerendering after creting the tweet
+  
+
+
   return (
    <div >
     <div className="grid grid-cols-12 h-screen w-screen px-56 ">
-
 
       <div className="col-span-3 border pt-1 px-4 ml-10 relative">
         <div className=" transition-all cursor-pointer h-fit w-fit text-2xl hover:bg-gray-600  p-5 rounded-full">
@@ -171,23 +185,29 @@ export default function Home() {
               </div>
 
               <div className="col-span-11">
-                 <textarea placeholder="Whats happening" className="border-b borer-slate-700 text-xl px-3 bg-transparent  w-full" rows={3}></textarea>
+                 <textarea placeholder="Whats happening" 
+                           className="border-b borer-slate-700 text-xl px-3 bg-transparent  w-full" 
+                           rows={3}
+                           value={content}
+                           onChange={(e) => setContent(e.target.value)}>
+
+                  </textarea>
                  <div className="mt-2 flex justify-between items-center">
                      <BiImageAlt onClick={handleSelectImage} className="text-2xl"/>
-                     <button className=" text-sm px-3 font-semibold  bg-[#1d9bf0] py-1 rounded-full ">
+                     <button
+                     onClick={handleCreateTweet} 
+                     className=" text-sm px-3 font-semibold  bg-[#1d9bf0] py-1 rounded-full ">
                           Tweet
                       </button>
                  </div>
               </div>
           </div>
 
-        <FeedCard/>
-        <FeedCard/>
-        <FeedCard/>
-        <FeedCard/>
-        <FeedCard/>
+          {
+            tweets?.map(tweet => tweet ? <FeedCard key={tweet?.id} data={tweet as Tweet}/> : null)
+          }
       </div>
-
+ 
 
       <div className="col-span-4 p-5">
 
