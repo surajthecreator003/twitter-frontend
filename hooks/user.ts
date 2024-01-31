@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 
 
 //will fetch the current user from the graphql backend
+//requires JWT token
 export const useCurrentUser=()=>{
     const query=useQuery({
         queryKey:["current-user"],//this key is keeping the cache
@@ -16,3 +17,4 @@ export const useCurrentUser=()=>{
 
 
 //the creating of react-query hooks feels just like context api hooks
+//create the react-query ocntext and wrap it arounf the app

@@ -21,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useCreateTweet, useGetAllTweets } from "@/hooks/tweet";
 import { Tweet } from "@/gql/graphql";
+import TwitterLayout from "@/components/Layout/TwitterLayout";
 
 
 
@@ -101,7 +102,7 @@ export default function Home() {
   if(verifyGoogleToken){//after getting the converted JWT token from the graphql server  store it in the local storage 
     window.localStorage.setItem("__twitter__token",verifyGoogleToken)
   }
-
+  
   //for diffrent account login invalidate the current user
   await queryClient.invalidateQueries({ queryKey: ["current-user"] }); // this is good as if we try to login from diffrent account then the current user
   // will be staled and if there is new data then it will be fetched from the graphql server
@@ -117,110 +118,56 @@ export default function Home() {
       content,
     })
   },[content,mutate])//this will result in rerendering after creting the tweet
-  
+
 
 
   return (
    <div >
-    <div className="grid grid-cols-12 h-screen w-screen px-56 ">
+    <TwitterLayout> 
 
-      <div className="col-span-3 border pt-1 px-4 ml-10 relative">
-        <div className=" transition-all cursor-pointer h-fit w-fit text-2xl hover:bg-gray-600  p-5 rounded-full">
-        <FaXTwitter  />
-        </div> 
+    <div className="transition cursor-pointer border border-gray-600  p-3 hover:bg-slate-900">
 
-        <div className="mt-1 text-1xl  pr-4">
-          <ul>
-          {sidebarMenuItems.map((item,index)=>
-            <li key={item.title} className= " mt-2 p-4 w-fit rounded-lg px-3 py-2 hover:bg-gray-800 flex justify-start items-center gap-4">
-            <span className="text-3xl">{item.icon}</span>  
-            <span>{item.title}</span>
-            </li>)}
-          </ul>
-
-          
-
-
-          <div className="mt-5 px-3">
-          <button className="mx-4 px-3 font-semibold  bg-[#1d9bf0] py-2 rounded-full w-full ">
-            Tweet
-            </button>
-          </div>         
-        </div> 
-        
-
-        {user  && <div className="px-3 py-2 bg-slate-800 p-3 rounded-full items-center absolute bottom-5 flex gap-2 tex-xl">
-          {user && user?.profileImageURL && <Image src={user?.profileImageURL} alt="profile" 
-                                                    height={50} 
-                                                    width={50}
-                                                    className="rounded-full h-15 w-15"/>
-                                                    
-                                                    }
-            <div>
-            <h3>{user.firstName}</h3> 
-            <h3>{user.lastName}</h3> </div>                                        
-           
-
-        </div>}
-            
-      </div>
-
-
-      <div className="col-span-5  h-screen overflow-scroll border-r-[1px] border-l-2-[1px] border-gray-600">
-
-        <div className="transition cursor-pointer border border-gray-600 border-r-0 border-b-0 border-l-0 p-3 hover:bg-slate-900">
-
-          <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-1">
-               {
-                user?.profileImageURL &&
-                <Image
-                className="rounded-full"
-                src={user?.profileImageURL}
-                alt="User-Image"
-                height={50}
-                width={40}
-                />
-               }    
-              </div>
-
-              <div className="col-span-11">
-                 <textarea placeholder="Whats happening" 
-                           className="border-b borer-slate-700 text-xl px-3 bg-transparent  w-full" 
-                           rows={3}
-                           value={content}
-                           onChange={(e) => setContent(e.target.value)}>
-
-                  </textarea>
-                 <div className="mt-2 flex justify-between items-center">
-                     <BiImageAlt onClick={handleSelectImage} className="text-2xl"/>
-                     <button
-                     onClick={handleCreateTweet} 
-                     className=" text-sm px-3 font-semibold  bg-[#1d9bf0] py-1 rounded-full ">
-                          Tweet
-                      </button>
-                 </div>
-              </div>
-          </div>
-
-          {
-            tweets?.map(tweet => tweet ? <FeedCard key={tweet?.id} data={tweet as Tweet}/> : null)
-          }
-      </div>
- 
-
-      <div className="col-span-4 p-5">
-
-        {!user  && <div className="border p-5 bg-slate-700 rounded-lg">
-          <h1 className="my-2 text-2xl">New to Twitter ?</h1>
-          <GoogleLogin onSuccess={handleLoginWithGoogle} />
+      <div className="grid grid-cols-12 gap-3">
+        <div className="col-span-1">
+        {
+          user?.profileImageURL &&
+          <Image
+          className="rounded-full"
+          src={user?.profileImageURL}
+          alt="User-Image"
+          height={50}
+          width={40}
+          />
+        }    
         </div>
-        }
-           
+
+        <div className="col-span-11">
+            <textarea placeholder="Whats happening" 
+                    className="border-b borer-slate-700 text-xl px-3 bg-transparent  w-full" 
+                    rows={3}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}>
+
+            </textarea>
+
+          <div className="mt-2 flex justify-between items-center">
+              <BiImageAlt onClick={handleSelectImage} className="text-2xl"/>
+              <button
+              onClick={handleCreateTweet} 
+              className=" text-sm px-3 font-semibold  bg-[#1d9bf0] py-1 rounded-full ">
+                    Tweet
+              </button>
+          </div>
+        </div>
       </div>
 
-    </div>
-   </div>
- </div>  
-  );
+{
+  tweets?.map(tweet => tweet ? <FeedCard key={tweet?.id} data={tweet as Tweet}/> : null)
 }
+</div>
+
+</TwitterLayout>
+</div>  
+);
+}
+ 

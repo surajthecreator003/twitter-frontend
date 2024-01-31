@@ -31,7 +31,8 @@ export const useCreateTweet=()=>{
 
 }
 
-
+//useGeteAllTweets is kind of public as it will render all the tweets in the home page
+//even if the user is not logged in  so thats why we are using react-query here
 export const useGetAllTweets=()=>{
 
     //run codegen to get the types if it creates error
