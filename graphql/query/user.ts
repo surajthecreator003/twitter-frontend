@@ -25,8 +25,12 @@ query GetCurrentUser {
         email,
         lastName,
         firstName,
-        profileImageURL
-         
+        profileImageURL,
+        tweets{
+            id
+            content
+        }
+          
     }
 }
 
