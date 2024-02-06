@@ -1,19 +1,20 @@
 import { graphql } from "@/gql";
 
 //this dosent require JWT token as it is public
-export const getAllTweetsQuery=graphql(`#graphql
+export const getAllTweetsQuery = graphql(`
+  #graphql
 
-query GetAllTweets {
+  query GetAllTweets {
     getAllTweets {
-         id
-        content
-        imageURL
-        author {
-            firstName
-            lastName
-            profileImageURL
-        }
-    } 
-}
-
-`) 
+      id
+      content
+      imageURL
+      author {
+        id
+        firstName
+        lastName
+        profileImageURL
+      }
+    }
+  }
+`);

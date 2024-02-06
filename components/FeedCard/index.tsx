@@ -6,6 +6,7 @@ import { FaRetweet } from "react-icons/fa6";
 import { FaRegHeart } from "react-icons/fa";
 import { BiUpload } from "react-icons/bi";
 import { Tweet } from "@/gql/graphql";
+import Link from "next/link";
 
 
 interface FeedCardProps{
@@ -16,25 +17,27 @@ const FeedCard:React.FC<FeedCardProps>=(props)=>{
 
     const {data}=props;
     
-    return <div className="transition cursor-pointer border border-gray-600 border-r-0 border-b-0 border-l-0 p-3 hover:bg-slate-900">
+    return <div className="  border border-gray-600 border-r-0 border-b-0 border-l-0 p-3 transition hover:bg-slate-900">
 
             <div className="grid grid-cols-12 gap-3">
                 
             <div className="col-span-1">
                {data.author?.profileImageURL      
                &&  
-               <Image 
-               className="rounded-full"    
+               <Link href={`/${data?.author?.id}`}><Image 
+                className="rounded-full"    
                 src={data.author?.profileImageURL}
                 alt="User-Image"
                 height={50}
                 width={40}
-                />}
+                />
+                </Link>
+                }
             </div>
 
             <div className="col-span-11">
                 <h5>
-                {data.author?.firstName} {data.author?.lastName}
+                <Link href={`/${data?.author?.id}`}>{data.author?.firstName} {data.author?.lastName} </Link>
                 </h5>
 
                 <p>

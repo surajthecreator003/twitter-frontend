@@ -4,35 +4,55 @@
 //import {graphql} from "../../gql"; to remove the error
 //basically some mistake in installing the graphql-codegen depnedency
 
-import {graphql} from "../../gql";
+import { graphql } from "../../gql";
 
+export const verifyUserGoogleToken = graphql(`
+  #graphql
 
-export const verifyUserGoogleToken =graphql( `#graphql
+  query VerifyUserGoogleToken($token: String!) {
+    verifyGoogleToken(token: $token)
+  }
+`);
 
-query VerifyUserGoogleToken($token: String!) {
-    verifyGoogleToken(token: $token) 
-}
+export const getCurrentUserQuery = graphql(`
+  #graphql
 
-`)
-
-
-
-export const getCurrentUserQuery=graphql(`#graphql
-  
-query GetCurrentUser {
+  query GetCurrentUser {
     getCurrentUser {
-        id,
-        email,
-        lastName,
-        firstName,
-        profileImageURL,
-        tweets{
-            id
-            content
-        }
-          
+      id
+      email
+      lastName
+      firstName
+      profileImageURL
+      tweets {
+        id
+        content
+      }
     }
-}
-
-`)
+  }
+`);
 //this will also passed to react-query as a query function
+
+//this will get the uer by id and also will be used to display all the tweets
+export const getUserByIdQuery = graphql(`
+  #graphql
+
+  query GetUserById($id: ID!) {
+    getUserById(id: $id) {
+      id
+      lastName
+      firstName
+      profileImageURL
+      tweets {
+        id
+        content
+        author {
+          id
+          firstName
+          lastName
+          profileImageURL
+        }
+      }
+    }
+  }
+`);

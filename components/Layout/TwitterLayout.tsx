@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 
 import { BiHash, BiHome, BiUser } from "react-icons/bi";
-import { BsBell, BsBookmark, BsEnvelope, BsTwitter } from "react-icons/bs";
+import { BsBell, BsBookmark, BsEnvelope } from "react-icons/bs";
 import { FaXTwitter } from "react-icons/fa6";
 import { FaMoneyBill } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
