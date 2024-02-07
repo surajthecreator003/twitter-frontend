@@ -20,8 +20,12 @@ import Image from "next/image";
 import { useCreateTweet, useGetAllTweets } from "@/hooks/tweet";
 import { Tweet } from "@/gql/graphql";
 import TwitterLayout from "@/components/Layout/TwitterLayout";
-import { getAllTweetsQuery } from "@/graphql/query/tweet";
+import {
+  getAllTweetsQuery,
+  getSignedURLForTweetQuery,
+} from "@/graphql/query/tweet";
 import { GetServerSideProps } from "next";
+import axios from "axios";
 
 //types for Left Side Bar Nav Buttons
 interface TwitterSidebarButton {
@@ -49,7 +53,7 @@ const sidebarMenuItems: TwitterSidebarButton[] = [
 //kind of similar to app router pages in the root directory
 
 //This will be the Home Page of the App "/"
-export default function Home(props:HomeProps) {
+export default function Home(props: HomeProps) {
   //after login from google Oauth you will get a credentials object from the onSucess callback function in GoogleLogin Button
   //credentials/creds automatically gets printed in console
 
@@ -63,15 +67,56 @@ export default function Home(props:HomeProps) {
   const queryClient = useQueryClient();
 
   const [content, setContent] = useState("");
+  const [imageURL, setImageURL] = useState("");
+
+  const handleInputChangeFile = useCallback((input: HTMLInputElement) => {
+    return async (event: Event) => {
+      event.preventDefault(); //stop the default behaviour of submittiung the form
+      console.log(input.files);//files as we can select multiple files
+
+      //the image is of type File
+      const file: File | null | undefined = input.files?.item(0);
+
+      if (!file) {
+        return;
+      }
+
+      const { getSignedURLForTweet } = await graphqlClient.request(
+        getSignedURLForTweetQuery,
+        {
+          imageName: file?.name || "",
+          imageType: file?.type || "",
+        }
+      );
+
+      if (getSignedURLForTweet) {
+        toast.loading("Uploading ...", { id: "2" });
+
+        await axios.put(getSignedURLForTweet, file, {
+          headers: { "Content-Type": file.type },
+        });
+
+        toast.success("Image Uploaded Successfully", { id: "2" });
+        const url = new URL(getSignedURLForTweet);
+        const myFilePath = `${url.origin}${url.pathname}`;
+        setImageURL(myFilePath);
+      }
+    };
+  }, []);
 
   //basically just create a React input element (that takes only image files) when clicked on the image button
   const handleSelectImage = useCallback(() => {
     const input = document.createElement("input");
 
     input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*"); //accept only image files
+    input.setAttribute("accept", "image/*"); //accept only image files of all types
+
+    const handleFn = handleInputChangeFile(input);
+
+    input.addEventListener("change", handleFn); //will triggger this after we select a file
     input.click();
-  }, []);
+    
+  }, [handleInputChangeFile]);
 
   //useCallback to prevent re-rendering of the component and memoize the function
   const handleLoginWithGoogle = useCallback(
@@ -113,8 +158,9 @@ export default function Home(props:HomeProps) {
   const handleCreateTweet = useCallback(async () => {
     mutate({
       content,
+      imageURL
     });
-  }, [content, mutate]); //this will result in rerendering after creting the tweet
+  }, [content,imageURL, mutate]); //this will result in rerendering after creting the tweet
 
   return (
     <div>
@@ -142,6 +188,8 @@ export default function Home(props:HomeProps) {
                 onChange={(e) => setContent(e.target.value)}
               ></textarea>
 
+              {imageURL && <Image src={imageURL} alt="tweet-image" width={300}  height={300} />}
+
               <div className="mt-2 flex justify-between items-center">
                 <BiImageAlt onClick={handleSelectImage} className="text-2xl" />
                 <button
@@ -163,9 +211,10 @@ export default function Home(props:HomeProps) {
   );
 }
 
-
 //making alml tweets server side rendered
-export const getServerSideProps: GetServerSideProps<HomeProps> = async (context) => {
+export const getServerSideProps: GetServerSideProps<HomeProps> = async (
+  context
+) => {
   const allTweets = await graphqlClient.request(getAllTweetsQuery);
   return { props: { tweets: allTweets.getAllTweets as Tweet[] } };
-};//need to depreciate the react-query and use the getServerSideProps
+}; //need to depreciate the react-query and use the getServerSideProps
