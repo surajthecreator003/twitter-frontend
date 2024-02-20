@@ -6,7 +6,7 @@ import { FaMoneyBill } from "react-icons/fa";
 import { SlOptions } from "react-icons/sl";
 
 import toast from "react-hot-toast";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 //GoogleLogin is the google login button and will take you to the login page of google
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
@@ -58,29 +58,38 @@ export default function Home(props: HomeProps) {
   //credentials/creds automatically gets printed in console
 
   const { user } = useCurrentUser();
-  const { tweets = [] } = useGetAllTweets();
-  const { mutate } = useCreateTweet();
+  const { tweets = props.tweets as Tweet[] } = useGetAllTweets();
+  const { mutateAsync } = useCreateTweet();
 
   console.log("Current User feteched and stored in react-query =", user);
   console.log("All Tweets feteched and stored in react-query =", tweets);
 
   const queryClient = useQueryClient();
 
+  const [tweet, setTweet] = useState<Tweet[]>();
   const [content, setContent] = useState("");
+
   const [imageURL, setImageURL] = useState("");
+
+  useEffect(() => {
+    if (tweets) {
+      setTweet(tweets as Tweet[]);
+    }
+  }, [tweets]);
 
   const handleInputChangeFile = useCallback((input: HTMLInputElement) => {
     return async (event: Event) => {
       event.preventDefault(); //stop the default behaviour of submittiung the form
-      console.log(input.files);//files as we can select multiple files
+      console.log(input.files); //files as we can select multiple files or imagesin a array []
 
       //the image is of type File
-      const file: File | null | undefined = input.files?.item(0);
+      const file: File | null | undefined = input.files?.item(0); //the current  selected image
 
       if (!file) {
         return;
       }
 
+      //this will be used to get the desired folder path for the image to be uploaded in S3 bucket by using the image name
       const { getSignedURLForTweet } = await graphqlClient.request(
         getSignedURLForTweetQuery,
         {
@@ -90,9 +99,10 @@ export default function Home(props: HomeProps) {
       );
 
       if (getSignedURLForTweet) {
-        toast.loading("Uploading ...", { id: "2" });
+        toast.loading("Uploading ...", { id: "2" }); //id wil be used(automatically) to update the toast message
 
         await axios.put(getSignedURLForTweet, file, {
+          //THIS WILL UPLOAD THE IMAGE TO THE S3 BUCKET
           headers: { "Content-Type": file.type },
         });
 
@@ -115,7 +125,6 @@ export default function Home(props: HomeProps) {
 
     input.addEventListener("change", handleFn); //will triggger this after we select a file
     input.click();
-    
   }, [handleInputChangeFile]);
 
   //useCallback to prevent re-rendering of the component and memoize the function
@@ -156,11 +165,13 @@ export default function Home(props: HomeProps) {
   ); //queryClient is a react-query
 
   const handleCreateTweet = useCallback(async () => {
-    mutate({
+    await mutateAsync({
       content,
-      imageURL
+      imageURL,
     });
-  }, [content,imageURL, mutate]); //this will result in rerendering after creting the tweet
+    setContent("");//to reset the input box message to blank
+    setImageURL("");//to reset the image url to blank
+  }, [content, imageURL, mutateAsync]); //this will result in rerendering after creting the tweet
 
   return (
     <div>
@@ -188,7 +199,14 @@ export default function Home(props: HomeProps) {
                 onChange={(e) => setContent(e.target.value)}
               ></textarea>
 
-              {imageURL && <Image src={imageURL} alt="tweet-image" width={300}  height={300} />}
+              {imageURL && (
+                <Image
+                  src={imageURL}
+                  alt="tweet-image"
+                  width={300}
+                  height={300}
+                />
+              )}
 
               <div className="mt-2 flex justify-between items-center">
                 <BiImageAlt onClick={handleSelectImage} className="text-2xl" />
@@ -202,7 +220,7 @@ export default function Home(props: HomeProps) {
             </div>
           </div>
 
-          {props.tweets?.map((tweet) =>
+          {tweet?.map((tweet) =>
             tweet ? <FeedCard key={tweet?.id} data={tweet as Tweet} /> : null
           )}
         </div>
@@ -211,7 +229,7 @@ export default function Home(props: HomeProps) {
   );
 }
 
-//making alml tweets server side rendered
+//making fetch all tweets server side rendered
 export const getServerSideProps: GetServerSideProps<HomeProps> = async (
   context
 ) => {
