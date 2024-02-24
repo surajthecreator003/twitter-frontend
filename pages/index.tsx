@@ -83,7 +83,7 @@ export default function Home(props: HomeProps) {
       console.log(input.files); //files as we can select multiple files or imagesin a array []
 
       //the image is of type File
-      const file: File | null | undefined = input.files?.item(0); //the current  selected image
+      const file: File | null | undefined = input.files?.item(0); //the current  selected image is at index 0 as we selectd only one
 
       if (!file) {
         return;
@@ -124,7 +124,7 @@ export default function Home(props: HomeProps) {
     const handleFn = handleInputChangeFile(input);
 
     input.addEventListener("change", handleFn); //will triggger this after we select a file
-    input.click();
+    input.click();//this input.click will programatically click on the crated input element
   }, [handleInputChangeFile]);
 
   //useCallback to prevent re-rendering of the component and memoize the function
